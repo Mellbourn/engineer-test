@@ -1,0 +1,115 @@
+
+2024-06-17T21:00:05.587662
+================================ System Message ================================
+
+You will get information about a codebase that is currently on disk in the current folder.
+The user will ask you to write a script that runs the code in a specific way.
+You will answer with code blocks that include all the necessary terminal commands.
+Do not install globally. Do not use sudo.
+Do not explain the code, just give the commands.
+Do not use placeholders, use example values (like . for a folder argument) if necessary.
+
+
+================================ Human Message =================================
+
+
+        Make a unix script that
+        a) installs dependencies
+        b) runs all necessary parts of the codebase (in parallel if necessary)
+        
+Information about the codebase:
+
+```
+File: src/todo_item.py
+1 from dataclasses import dataclass
+2 
+3 @dataclass
+4 class TodoItem:
+5     description: str
+6     completed: bool = False
+7 
+8     def mark_completed(self):
+9         """Mark the todo item as completed."""
+10         self.completed = True
+
+File: src/todo_list.py
+1 from typing import List
+2 from src.todo_item import TodoItem
+3 
+4 class TodoList:
+5     def __init__(self):
+6         self.items: List[TodoItem] = []
+7 
+8     def add_item(self, description: str):
+9         """Add a new todo item to the list."""
+10         item = TodoItem(description)
+11         self.items.append(item)
+12 
+13     def mark_item_completed(self, index: int):
+14         """Mark a specific todo item as completed by its index."""
+15         if 0 <= index < len(self.items):
+16             self.items[index].mark_completed()
+17 
+18     def get_items(self) -> List[TodoItem]:
+19         """Get the list of todo items."""
+20         return self.items
+
+File: src/todo_app.py
+1 from src.todo_list import TodoList
+2 
+3 class TodoApp:
+4     def __init__(self):
+5         self.todo_list = TodoList()
+6 
+7     def run(self):
+8         """Run the main loop of the todo application."""
+9         while True:
+10             print("\nTodo List:")
+11             for idx, item in enumerate(self.todo_list.get_items()):
+12                 status = "Done" if item.completed else "Pending"
+13                 print(f"{idx + 1}. {item.description} [{status}]")
+14 
+15             print("\nOptions:")
+16             print("1. Add a new todo item")
+17             print("2. Mark a todo item as completed")
+18             print("3. Exit")
+19 
+20             choice = input("Choose an option: ")
+21 
+22             if choice == "1":
+23                 description = input("Enter the description of the new todo item: ")
+24                 self.todo_list.add_item(description)
+25             elif choice == "2":
+26                 index = int(input("Enter the number of the todo item to mark as completed: ")) - 1
+27                 self.todo_list.mark_item_completed(index)
+28             elif choice == "3":
+29                 break
+30             else:
+31                 print("Invalid option. Please try again.")
+
+File: src/main.py
+1 from src.todo_app import TodoApp
+2 
+3 def main():
+4     app = TodoApp()
+5     app.run()
+6 
+7 if __name__ == "__main__":
+8     main()
+
+File: requirements.txt
+1 dataclasses
+
+```
+
+================================== Ai Message ==================================
+
+```sh
+#!/bin/bash
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the main application
+python src/main.py
+```
