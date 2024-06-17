@@ -1,0 +1,348 @@
+
+2024-06-17T21:46:52.682943
+================================ System Message ================================
+
+You will get information about a codebase that is currently on disk in the current folder.
+The user will ask you to write a script that runs the code in a specific way.
+You will answer with code blocks that include all the necessary terminal commands.
+Do not install globally. Do not use sudo.
+Do not explain the code, just give the commands.
+Do not use placeholders, use example values (like . for a folder argument) if necessary.
+
+
+================================ Human Message =================================
+
+
+        Make a unix script that
+        a) installs dependencies
+        b) runs all necessary parts of the codebase (in parallel if necessary)
+        
+Information about the codebase:
+
+```
+File: Structure
+1 todo-app/
+2 ├── public/
+3 │   └── index.html
+4 ├── src/
+5 │   ├── components/
+6 │   │   ├── AddTodo.tsx
+7 │   │   ├── TodoItem.tsx
+8 │   │   ├── TodoList.tsx
+9 │   ├── context/
+10 │   │   └── TodoContext.tsx
+11 │   ├── types/
+12 │   │   └── index.ts
+13 │   ├── App.tsx
+14 │   ├── index.tsx
+15 │   └── styles.css
+16 ├── package.json
+17 ├── tsconfig.json
+18 └── README.md
+
+File: public/index.html
+1 <!DOCTYPE html>
+2 <html lang="en">
+3 <head>
+4     <meta charset="UTF-8">
+5     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+6     <title>Todo App</title>
+7 </head>
+8 <body>
+9     <div id="root"></div>
+10 </body>
+11 </html>
+
+File: src/index.tsx
+1 import React from 'react';
+2 import ReactDOM from 'react-dom';
+3 import App from './App';
+4 import './styles.css';
+5 
+6 ReactDOM.render(
+7   <React.StrictMode>
+8     <App />
+9   </React.StrictMode>,
+10   document.getElementById('root')
+11 );
+
+File: src/App.tsx
+1 import React from 'react';
+2 import { TodoProvider } from './context/TodoContext';
+3 import TodoList from './components/TodoList';
+4 import AddTodo from './components/AddTodo';
+5 
+6 const App: React.FC = () => {
+7   return (
+8     <TodoProvider>
+9       <div className="app">
+10         <h1>Todo App</h1>
+11         <AddTodo />
+12         <TodoList />
+13       </div>
+14     </TodoProvider>
+15   );
+16 };
+17 
+18 export default App;
+
+File: src/components/AddTodo.tsx
+1 import React, { useState, useContext } from 'react';
+2 import { TodoContext } from '../context/TodoContext';
+3 
+4 const AddTodo: React.FC = () => {
+5   const [title, setTitle] = useState('');
+6   const { addTodo } = useContext(TodoContext);
+7 
+8   const handleSubmit = (e: React.FormEvent) => {
+9     e.preventDefault();
+10     if (title.trim()) {
+11       addTodo(title);
+12       setTitle('');
+13     }
+14   };
+15 
+16   return (
+17     <form onSubmit={handleSubmit}>
+18       <input
+19         type="text"
+20         value={title}
+21         onChange={(e) => setTitle(e.target.value)}
+22         placeholder="Add a new todo"
+23       />
+24       <button type="submit">Add</button>
+25     </form>
+26   );
+27 };
+28 
+29 export default AddTodo;
+
+File: src/components/TodoItem.tsx
+1 import React, { useContext } from 'react';
+2 import { TodoContext } from '../context/TodoContext';
+3 import { Todo } from '../types';
+4 
+5 interface TodoItemProps {
+6   todo: Todo;
+7 }
+8 
+9 const TodoItem: React.FC<TodoItemProps> = ({ todo }) => {
+10   const { toggleTodo } = useContext(TodoContext);
+11 
+12   return (
+13     <div className="todo-item">
+14       <input
+15         type="checkbox"
+16         checked={todo.completed}
+17         onChange={() => toggleTodo(todo.id)}
+18       />
+19       <span style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}>
+20         {todo.title}
+21       </span>
+22     </div>
+23   );
+24 };
+25 
+26 export default TodoItem;
+
+File: src/components/TodoList.tsx
+1 import React, { useContext } from 'react';
+2 import { TodoContext } from '../context/TodoContext';
+3 import TodoItem from './TodoItem';
+4 
+5 const TodoList: React.FC = () => {
+6   const { todos } = useContext(TodoContext);
+7 
+8   return (
+9     <div className="todo-list">
+10       {todos.map((todo) => (
+11         <TodoItem key={todo.id} todo={todo} />
+12       ))}
+13     </div>
+14   );
+15 };
+16 
+17 export default TodoList;
+
+File: src/context/TodoContext.tsx
+1 import React, { createContext, useState } from 'react';
+2 import { Todo } from '../types';
+3 
+4 interface TodoContextProps {
+5   todos: Todo[];
+6   addTodo: (title: string) => void;
+7   toggleTodo: (id: number) => void;
+8 }
+9 
+10 export const TodoContext = createContext<TodoContextProps>({
+11   todos: [],
+12   addTodo: () => {},
+13   toggleTodo: () => {},
+14 });
+15 
+16 export const TodoProvider: React.FC = ({ children }) => {
+17   const [todos, setTodos] = useState<Todo[]>([]);
+18 
+19   const addTodo = (title: string) => {
+20     const newTodo: Todo = {
+21       id: Date.now(),
+22       title,
+23       completed: false,
+24     };
+25     setTodos([...todos, newTodo]);
+26   };
+27 
+28   const toggleTodo = (id: number) => {
+29     setTodos(
+30       todos.map((todo) =>
+31         todo.id === id ? { ...todo, completed: !todo.completed } : todo
+32       )
+33     );
+34   };
+35 
+36   return (
+37     <TodoContext.Provider value={{ todos, addTodo, toggleTodo }}>
+38       {children}
+39     </TodoContext.Provider>
+40   );
+41 };
+
+File: src/types/index.ts
+1 export interface Todo {
+2   id: number;
+3   title: string;
+4   completed: boolean;
+5 }
+
+File: src/styles.css
+1 body {
+2   font-family: Arial, sans-serif;
+3   background-color: #f4f4f4;
+4   margin: 0;
+5   padding: 0;
+6 }
+7 
+8 .app {
+9   max-width: 600px;
+10   margin: 50px auto;
+11   padding: 20px;
+12   background: white;
+13   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+14 }
+15 
+16 h1 {
+17   text-align: center;
+18 }
+19 
+20 form {
+21   display: flex;
+22   justify-content: space-between;
+23   margin-bottom: 20px;
+24 }
+25 
+26 input[type="text"] {
+27   flex: 1;
+28   padding: 10px;
+29   font-size: 16px;
+30 }
+31 
+32 button {
+33   padding: 10px;
+34   font-size: 16px;
+35   background-color: #007bff;
+36   color: white;
+37   border: none;
+38   cursor: pointer;
+39 }
+40 
+41 button:hover {
+42   background-color: #0056b3;
+43 }
+44 
+45 .todo-list {
+46   list-style: none;
+47   padding: 0;
+48 }
+49 
+50 .todo-item {
+51   display: flex;
+52   align-items: center;
+53   padding: 10px;
+54   border-bottom: 1px solid #ddd;
+55 }
+56 
+57 .todo-item input[type="checkbox"] {
+58   margin-right: 10px;
+59 }
+
+File: package.json
+1 {
+2   "name": "todo-app",
+3   "version": "1.0.0",
+4   "description": "A simple todo app using React and TypeScript",
+5   "main": "index.js",
+6   "scripts": {
+7     "start": "react-scripts start",
+8     "build": "react-scripts build",
+9     "test": "react-scripts test",
+10     "eject": "react-scripts eject"
+11   },
+12   "dependencies": {
+13     "react": "^17.0.2",
+14     "react-dom": "^17.0.2",
+15     "react-scripts": "4.0.3",
+16     "typescript": "^4.1.2"
+17   },
+18   "devDependencies": {
+19     "@types/react": "^17.0.0",
+20     "@types/react-dom": "^17.0.0"
+21   },
+22   "browserslist": {
+23     "production": [
+24       ">0.2%",
+25       "not dead",
+26       "not op_mini all"
+27     ],
+28     "development": [
+29       "last 1 chrome version",
+30       "last 1 firefox version",
+31       "last 1 safari version"
+32     ]
+33   }
+34 }
+
+File: tsconfig.json
+1 {
+2   "compilerOptions": {
+3     "target": "es5",
+4     "lib": ["dom", "dom.iterable", "esnext"],
+5     "allowJs": true,
+6     "skipLibCheck": true,
+7     "esModuleInterop": true,
+8     "allowSyntheticDefaultImports": true,
+9     "strict": true,
+10     "forceConsistentCasingInFileNames": true,
+11     "noFallthroughCasesInSwitch": true,
+12     "module": "esnext",
+13     "moduleResolution": "node",
+14     "resolveJsonModule": true,
+15     "isolatedModules": true,
+16     "noEmit": true,
+17     "jsx": "react-jsx"
+18   },
+19   "include": ["src"]
+20 }
+
+```
+
+================================== Ai Message ==================================
+
+```sh
+#!/bin/bash
+
+# Install dependencies
+npm install
+
+# Run the application
+npm start
+```
